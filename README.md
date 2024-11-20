@@ -4,5 +4,11 @@ Parts of this pipeline approach are based on the pipeline described in the [Data
 
 Daniela Dueñas    
 dduenas4@dons.usfca.edu    
-November 18, 2024    
+November 19, 2024    
+
+## Project Overview
+
+For this project, I will be analyzing the sequences data from SRA BioProject PRJNA745219, which aimed to understand how SARS-CoV-2 affects different cell tissues and among different species. 
+
+## Project Outline
 
