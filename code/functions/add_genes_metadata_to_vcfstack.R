@@ -36,7 +36,7 @@ add_genes_metadata_to_vcfstack <- function(stacked_vcf,
   merged_vcf <- stacked_vcf %>%
     dplyr::rowwise() %>% # key because the function is running on each row
     dplyr::mutate(gene = assign_gene(pos, cleaned_genes_table)) %>%
-    dplyr::left_join(sra_runtable, by = c("sample" = "Run"))
+    dplyr::left_join(sra_runtable, by = c("sample" = "run_number"))
 
   return(merged_vcf)
 }

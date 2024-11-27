@@ -38,6 +38,9 @@ parse_tidy_and_stack_vcfs <- function(vcf_dir_path) {
     my_vcf_in <- vcfR::read.vcfR(vcf_file,
                                  verbose = FALSE)
 
+    # skip this vcf is there is no SNPs
+    if (length(my_vcf_in@fix) == 0) next
+
     tidied_vcf <- vcfR::vcfR2tidy(my_vcf_in)
 
     # check for correct filenames in dataset
