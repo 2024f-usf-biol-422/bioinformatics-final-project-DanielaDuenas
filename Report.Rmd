@@ -151,12 +151,12 @@ vcf_with_metadata %>%
          qual = round(qual)) %>% # rounds qual scores to nearest whole number
   ggplot(aes(x = pos,
              y = qual,
-             color = tissue)) +
+             color = cell_type)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNP Quality Scores Across Chlorocebus aethiops Tissue Samples",
+  labs(title = "SNP Quality Scores Across C. aethiops Tissue Samples",
        x = "Position on Genome",
        y = "SNP Quality",
-       color = "Tissue Type") +
+       color = "Cell Line") +
   theme_few()
 ggsave("output/model-tissue-qual_scatterplot.png", width = 8, height = 6)
 ```
@@ -178,6 +178,25 @@ vcf_with_metadata %>%
        color = "Treatment Type") +
   theme_few()
 ggsave("output/human-treatments_scatterplot.png", width = 8, height = 6)
+```
+
+```{r human-cells-plot}
+# Scatterplot of SNP quality scores in H. sapiens per cell line
+vcf_with_metadata %>%
+  filter(organism == "Homo sapiens") %>%
+  filter(qual > 200) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  ggplot(aes(x = pos,
+             y = qual,
+             color = cell_line)) +
+  geom_point(size = 3, alpha = 0.6) +
+  labs(title = "SNPs Across Human Genome Per Cell Line",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Cell Line") +
+  theme_few()
+ggsave("output/human-cell-line_scatterplot.png", width = 8, height = 6)
 ```
 
 ```{r treatment-model-plot}
