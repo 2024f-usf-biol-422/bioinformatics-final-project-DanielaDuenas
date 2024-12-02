@@ -8,7 +8,7 @@ bibliography: references.bib
 params:
   gff_file_path: "data/metadata/sars_refgenome_annotation.gff"
   vcf_dir_path: "data/11_vcf_output_for_R"
-  sra_runtable_path: "data/00_sra_runtable/2024-11-25_clean_data.csv"
+  sra_runtable_path: "data/00_sra_runtable/2024-12-01_clean_data.csv"
 ---
 
 ```{r setup, include = FALSE}
@@ -70,7 +70,7 @@ vcf_with_metadata <-
 
 # Figures
 
-```{r sample-plot}
+```{r distinct-snp-plot}
 # create a plot of unique SNP locations within each gene across all samples
 vcf_with_metadata %>%
   filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
@@ -80,10 +80,122 @@ vcf_with_metadata %>%
   tally() %>% # this collapses that down to the number of unique SNP locations
   ggplot(aes(x = gene,
              y = n)) +
-  geom_col() +
+  geom_col(fill = "darkgreen") +
   labs(title = "Count of distinct SNPs in Named SARS-CoV-2 Genes",
        x = "Gene Name") +
   theme_few() # get rid of the grey background
+ggsave("output/distinct-snp-plot.png", width = 8, height = 6)
+```
+
+```{r sample-number-plot}
+# A plot of the number of sample runs per organism
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
+  group_by(sample, organism) %>%
+  tally() %>% # this gives a column n for the number of samples per organism
+  group_by(organism) %>%
+  tally() %>%
+  ggplot(aes(x = organism,
+             y = n)) +
+  geom_col(fill = "blue") +
+  geom_text(aes(label = n), vjust = -0.1, color = "black") +
+  labs(title = "Number of Samples Run Per Organism Type",
+       x = "Organism") +
+  theme_few()
+ggsave("output/sample-number-plot.png", width = 8, height = 6)
+```
+
+```{r qual-scatterplot}
+# A scatterplot of SNP quality scores in human and C. aethiops genomes
+vcf_with_metadata %>%
+  filter(qual > 200) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds to nearest whole number
+  ggplot(aes(x = pos,
+             y = qual,
+             color = organism)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "SNP Quality Scores Across Organism Genomes",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Organism") +
+  theme_few()
+ggsave("output/qual-scores_scatterplot.png", width = 8, height = 6)
+```
+
+```{r human-tissue-plot}
+# A scatterplot of SNP quality scores from various human tissues
+vcf_with_metadata %>%
+  filter(organism == "Homo sapiens") %>% # filters samples to only H. sapiens
+  filter(qual > 200) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  ggplot(aes(x = pos,
+             y = qual,
+             color = tissue)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "SNP Quality Scores Across Human Tissue Samples",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Tissue Type") +
+  theme_few()
+ggsave("output/human-tissue-qual_scatterplot.png", width = 8, height = 6)
+```
+
+```{r model-tissue-plot}
+# A scatterplot of SNP quality scores from C. aethiops tissue (kidney)
+vcf_with_metadata %>%
+  filter(organism == "Chlorocebus aethiops") %>% # filters out H. sapiens
+  filter(qual > 200) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  ggplot(aes(x = pos,
+             y = qual,
+             color = tissue)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "SNP Quality Scores Across Chlorocebus aethiops Tissue Samples",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Tissue Type") +
+  theme_few()
+ggsave("output/model-tissue-qual_scatterplot.png", width = 8, height = 6)
+```
+
+```{r treatment-human-plot}
+# Scatterplot of SNP quality scores of mock/SARS infected cells in H. sapiens
+vcf_with_metadata %>%
+  filter(organism == "Homo sapiens") %>%
+  filter(qual > 200) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  ggplot(aes(x = pos,
+             y = qual,
+             color = treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "SNPs Across Human Genome Based on Cell Treatment",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Treatment Type") +
+  theme_few()
+ggsave("output/human-treatments_scatterplot.png", width = 8, height = 6)
+```
+
+```{r treatment-model-plot}
+# Scatterplot of SNP quality scores of mock/SARS infected cells in C. aethiops
+vcf_with_metadata %>%
+  filter(organism == "Chlorocebus aethiops") %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  ggplot(aes(x = pos,
+             y = qual,
+             color = treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "SNPs Across C. aethiops Genome Based on Cell Treatment",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Treatment Type") +
+  theme_few()
+ggsave("output/model-treatments_scatterplot.png", width = 8, height = 6)
 ```
 
 **Figure 1**: N and S genes have more unique SNPs in the set of samples analyzed.
@@ -92,15 +204,43 @@ vcf_with_metadata %>%
 
 ```{r example-table}
 # An example table to show the length of each gene using its start and end
-gene_table %>%
+gene_table <- gene_table %>%
   mutate(length = end - start) %>%
   select(gene_name, start, end, length) %>%
   knitr::kable(col.names = c("Gene Name",
                              "Start",
                              "End",
                              "Length"))
+write.csv(gene_table, "output/gene_table.csv", row.names = FALSE)
 ```
 
 **Table 1**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
+
+```{r SNP-tally}
+# A table of SNPs with quality values greater than 200 from each gene
+snp_tally <- vcf_with_metadata %>%
+  filter(qual > 200) %>%
+  group_by(gene) %>%
+  tally() %>%
+  knitr::kable(col.names = c("Gene Name",
+                             "Number of SNPs"))
+write.csv(snp_tally, "output/snp_tally.csv", row.names = FALSE)
+```
+
+```{r top-snp-tally}
+# A table including information about SNPs with qual > 200
+snp_tally_data <- vcf_with_metadata %>%
+  filter(qual > 200) %>%
+  group_by(gene, organism, tissue, treatment) %>%
+  tally() %>%
+  rename("Gene Name" = gene,
+         "Organism" = organism,
+         "Tissue" = tissue,
+         "Treatment" = treatment,
+         "Number of SNPs" = n) %>%
+  arrange(desc(`Number of SNPs`)) %>% # arranges values in descending order
+  knitr::kable()
+write.csv(snp_tally_data, "output/snp_tally_data.csv", row.names = FALSE)
+```
 
 # Sources Cited
