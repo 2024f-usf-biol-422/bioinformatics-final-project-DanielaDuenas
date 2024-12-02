@@ -115,7 +115,7 @@ vcf_with_metadata %>%
              y = qual,
              color = organism)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNP Quality Scores Across Organism Genomes",
+  labs(title = "SNPs Found Across Organism Samples",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Organism") +
@@ -135,7 +135,7 @@ vcf_with_metadata %>%
              y = qual,
              color = tissue)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across H. sapien Genomes of Infected Tissues",
+  labs(title = "SNPs Found in H. sapien Infected Tissues",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Tissue Type") +
@@ -155,7 +155,7 @@ vcf_with_metadata %>%
              y = qual,
              color = cell_type)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across C. aethiops Genomes of Infected Cells",
+  labs(title = "SNPs Found in C. aethiops Infected Cells",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
@@ -174,7 +174,7 @@ vcf_with_metadata %>%
              y = qual,
              color = treatment)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across H. sapien Genome Based on Cell Treatment",
+  labs(title = "SNP Count Based on Treatment of H. sapien cells",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Treatment Type") +
@@ -194,7 +194,7 @@ vcf_with_metadata %>%
              y = qual,
              color = cell_line)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across H. sapien Genome Per Infected Cell Line",
+  labs(title = "SNPs within H. sapien Infected Cell Lines",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
@@ -212,7 +212,7 @@ vcf_with_metadata %>%
              y = qual,
              color = treatment)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across C. aethiops Genome Based on Cell Treatment",
+  labs(title = "SNP Count Based on Treatment of C. aethiop cells",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Treatment Type") +
@@ -226,7 +226,7 @@ ggsave("output/model-treatments_scatterplot.png", width = 8, height = 6)
 
 ```{r example-table}
 # An example table to show the length of each gene using its start and end
-gene_table <- gene_table %>%
+gene_table %>%
   mutate(length = end - start) %>%
   select(gene_name, start, end, length) %>%
   knitr::kable(col.names = c("Gene Name",
@@ -240,20 +240,21 @@ write.csv(gene_table, "output/gene_table.csv", row.names = FALSE)
 
 ```{r SNP-tally}
 # A table of SNPs with quality values greater than 200 from each gene
-snp_tally <- vcf_with_metadata %>%
+vcf_with_metadata %>%
   filter(qual > 200) %>%
   group_by(gene) %>%
   tally() %>%
   knitr::kable(col.names = c("Gene Name",
                              "Number of SNPs"))
-write.csv(snp_tally, "output/snp_tally.csv", row.names = FALSE)
+write.csv(vcf_with_metadata, "output/snp_tally.csv", row.names = FALSE)
 ```
 
 ```{r top-snp-tally}
 # A table including information about SNPs with qual > 200
-snp_tally_data <- vcf_with_metadata %>%
+vcf_with_metadata %>%
   filter(qual > 200) %>%
   group_by(gene, organism, tissue, treatment) %>%
+  filter(treatment == "SARS-CoV-2") %>%
   tally() %>%
   rename("Gene Name" = gene,
          "Organism" = organism,
@@ -262,7 +263,9 @@ snp_tally_data <- vcf_with_metadata %>%
          "Number of SNPs" = n) %>%
   arrange(desc(`Number of SNPs`)) %>% # arranges values in descending order
   knitr::kable()
-write.csv(snp_tally_data, "output/snp_tally_data.csv", row.names = FALSE)
+write.csv(vcf_with_metadata, "output/snp_tally_data.csv", row.names = FALSE)
 ```
+
+
 
 # Sources Cited
