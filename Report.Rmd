@@ -172,7 +172,7 @@ vcf_with_metadata %>%
              y = qual,
              color = treatment)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across Human Genome Based on Cell Treatment",
+  labs(title = "SNPs Across H. sapien Genome Based on Cell Treatment",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Treatment Type") +
@@ -191,7 +191,7 @@ vcf_with_metadata %>%
              y = qual,
              color = cell_line)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across Human Genome Per Cell Line",
+  labs(title = "SNPs Across H. sapien Genome Per Cell Line",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
