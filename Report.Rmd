@@ -114,7 +114,7 @@ vcf_with_metadata %>%
   ggplot(aes(x = pos,
              y = qual,
              color = organism)) +
-  geom_point(size = 3, alpha = 0.6) +
+  geom_point(size = 5, alpha = 0.6) +
   labs(title = "SNPs Found Across Organism Samples",
        x = "Position on Genome",
        y = "SNP Quality",
@@ -134,8 +134,8 @@ vcf_with_metadata %>%
   ggplot(aes(x = pos,
              y = qual,
              color = tissue)) +
-  geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Found in H. sapien Infected Tissues",
+  geom_point(size = 5, alpha = 0.6) +
+  labs(title = "SNPs Found in H. sapien SARS-CoV-2 Infected Tissues",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Tissue Type") +
@@ -154,8 +154,8 @@ vcf_with_metadata %>%
   ggplot(aes(x = pos,
              y = qual,
              color = cell_type)) +
-  geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Found in C. aethiops Infected Cells",
+  geom_point(size = 5, alpha = 0.6) +
+  labs(title = "SNPs Found in C. aethiops SARS-CoV-2 Infected Cells",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
@@ -173,7 +173,7 @@ vcf_with_metadata %>%
   ggplot(aes(x = pos,
              y = qual,
              color = treatment)) +
-  geom_point(size = 3, alpha = 0.6) +
+  geom_point(size = 5, alpha = 0.6) +
   labs(title = "SNP Count Based on Treatment of H. sapien cells",
        x = "Position on Genome",
        y = "SNP Quality",
@@ -193,8 +193,8 @@ vcf_with_metadata %>%
   ggplot(aes(x = pos,
              y = qual,
              color = cell_line)) +
-  geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs within H. sapien Infected Cell Lines",
+  geom_point(size = 5, alpha = 0.6) +
+  labs(title = "SNPs from H. sapien SARS-CoV-2 Infected Cell Lines",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
@@ -211,7 +211,7 @@ vcf_with_metadata %>%
   ggplot(aes(x = pos,
              y = qual,
              color = treatment)) +
-  geom_point(size = 3, alpha = 0.6) +
+  geom_point(size = 5, alpha = 0.6) +
   labs(title = "SNP Count Based on Treatment of C. aethiop cells",
        x = "Position on Genome",
        y = "SNP Quality",
