@@ -130,11 +130,12 @@ vcf_with_metadata %>%
   filter(qual > 200) %>%
   mutate(qual = as.numeric(qual), # converts qual to numeric values
          qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  filter(treatment == "SARS-CoV-2") %>%
   ggplot(aes(x = pos,
              y = qual,
              color = tissue)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNP Quality Scores Across Human Tissue Samples",
+  labs(title = "SNPs Across H. sapien Genomes of Infected Tissues",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Tissue Type") +
@@ -149,11 +150,12 @@ vcf_with_metadata %>%
   filter(qual > 200) %>%
   mutate(qual = as.numeric(qual), # converts qual to numeric values
          qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  filter(treatment == "SARS-CoV-2") %>%
   ggplot(aes(x = pos,
              y = qual,
              color = cell_type)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNP Quality Scores Across C. aethiops Tissue Samples",
+  labs(title = "SNPs Across C. aethiops Genomes of Infected Cells",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
@@ -187,11 +189,12 @@ vcf_with_metadata %>%
   filter(qual > 200) %>%
   mutate(qual = as.numeric(qual), # converts qual to numeric values
          qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  filter(treatment == "SARS-CoV-2") %>%
   ggplot(aes(x = pos,
              y = qual,
              color = cell_line)) +
   geom_point(size = 3, alpha = 0.6) +
-  labs(title = "SNPs Across H. sapien Genome Per Cell Line",
+  labs(title = "SNPs Across H. sapien Genome Per Infected Cell Line",
        x = "Position on Genome",
        y = "SNP Quality",
        color = "Cell Line") +
