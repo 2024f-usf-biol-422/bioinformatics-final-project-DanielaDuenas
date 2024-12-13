@@ -33,7 +33,7 @@ The purpose of this data analysis was to compare the various SNPs on the SARS-Co
 
 ## Data Collection
 
-The dataset used in this report (PRJNA745219) was obtained from a list of BioProjects within the National Library of Medicine from the National Center for Biotechnology Information (NCBI) [@ucirvine2021ncbi]. This data along with its metadata were downloaded from the SRA Run Selector webpage [@sraselector].
+The dataset used in this report (PRJNA745219) was obtained from a list of BioProjects within the National Library of Medicine from the National Center for Biotechnology Information (NCBI) [@ucirvine2021ncbi]. This data along with its metadata were downloaded from the SRA Run Selector webpage.
 
 ## RStudio Packages and Analysis
 
