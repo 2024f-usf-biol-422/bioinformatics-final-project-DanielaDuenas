@@ -1,14 +1,17 @@
 ---
-title: 'Your Title Here'
-author: "Don Francisco"
+title: "Analysis of SARS-CoV-2 Sequences After Infection in Human and Non-Human Primate
+  Tissues"
+author: "Daniela Dueñas"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 csl: bioinformatics.csl
 bibliography: references.bib
 params:
-  gff_file_path: "data/metadata/sars_refgenome_annotation.gff"
-  vcf_dir_path: "data/11_vcf_output_for_R"
-  sra_runtable_path: "data/00_sra_runtable/SraRunTable_PRJNA656695_short_example.txt"
+  gff_file_path: data/metadata/sars_refgenome_annotation.gff
+  vcf_dir_path: data/11_vcf_output_for_R
+  sra_runtable_path: "data/00_sra_runtable/2024-12-01_clean_data.csv"
 ---
 
 ```{r setup, include = FALSE}
@@ -20,21 +23,21 @@ knitr::opts_chunk$set(echo = FALSE,
 
 # Background and Overview
 
-This is a report on SARS-CoV-2, including some variant analysis [@koyama2020variant].
+This is a report on whether SARS-CoV-2 sequences vary depending on the organism it infects. Based on knowledge from the COVID-19 pandemic, scientists understand that SARS-CoV-2 mutates at a rapid rate, much like many other virus. According to an article published in the World Health Organization Bulletin, a total of 5775 SARS-CoV-2 variants were discovered from infected patients between February and May of 2020 [@koyama2020variant]. This ability to mutate comes down to the virus' genome. SARS-CoV-2 contains genes that encodes for several key proteins. _ORF1ab_ is an open-reading frame gene, that produces poly-proteins. These poly-proteins encode for non-structural proteins that are involved with various processes, such as the virus' replication cycle, transcription events, and diminishing the host's immune protection [@orf1ab2024ncbi]. _ORF8_ is another open-reading frame gene that impedes the IFN pathway (which promotes immune responses), and blocks presentation of class 1 MHC on the infected cell for cytotoxic T cell targeting and destruction [@vinjamuri2022sars]. Structural genes, such as the _S_ gene, _M_ gene and _N_ gene code for the SARS-CoV-2 spike protein, membrane protein, and capsid protein layer (respectively) [@vinjamuri2022sars]. Previous research has indicated that mutations at these genes may be involved in SARS-CoV-2's increased virulence and continuous presence throughout the world, despite the continuous production of vaccines. 
+
+In 2021, a research team at UC Irvine wanted to understand the human body's response to SARS-CoV-2 after an infection. As part of their research, they obtained several human cancer cell lines and either infected those cells with SARS-CoV-2 or a mock infection. The cancer cells allowed the virus an opportunity to replicate within the cells over four days, in which the viral sequences were eventually isolated and analyzed using an Illumina sequencer [@geerling2022roles]. The scientists were also curious if the type of organism that the virus infects plays a role in the synthesized viral sequence, so they also performed their experiment on _Chlorocebus aethiops_ or Grivet monkey cells [@grivet2024]. From this analysis, the researchers were able to identify single nucleotide polymorphisms (SNPs) or variations in the viral genetic sequence [@Edwards2007]. This data was compiled and organized into a BioProject dataset labelled PRJNA745219 in the NCBI database, which was the data used to develop this report [@ucirvine2021ncbi]. To assess the data, it was first downloaded with the associated metadata and then run through a pipeline on a server to obtain the data as a fastq file. **`FastQC`** was used to run through the file and perform a quality check. The **`Trimmomatic`** tool was utilized in a shell script to trim the data and remove any possible outliers that would have affected the overall data [@bolger2014trim]. The **`BWA`** package aligned the sequence data with reference genomes to identify any SNPs and calculate a quality score of each. The quality score indicated how confident the program was about those SNPs. **`BCFtools`** converted the resulting information into VCF files for each identified SNP.
+
+The purpose of this data analysis was to compare the various SNPs on the SARS-CoV-2 genome after cellular infection and to understand if the type of organism that SARS-CoV-2 infects has any affect on the resulting SNPs. I found that the majority of the SNPs analyzed affected the ORF1ab gene, regardless of whether the sequences were synthesized from _H. sapiens_ or _C. aethiops_. Due to the importance of this gene in SARS-CoV-2 replication, it suggests that the mutations on ORF1ab assist the virus evade an organism's immune system and is possibly involved with the virus' constant evolution.
 
 # Methods
 
-See the set of tutorials on the [vcfR package website](https://knausb.github.io/vcfR_documentation/index.html).
+## Data Collection
 
-You may also want to use any of a range of different COVID data packages and data sources:
+The dataset used in this report (PRJNA745219) was obtained from a list of BioProjects within the National Library of Medicine from the National Center for Biotechnology Information (NCBI) [@ucirvine2021ncbi]. This data along with its metadata were downloaded from the SRA Run Selector webpage.
 
-* https://kjhealy.github.io/covdata/
-* https://github.com/como-ph/oxcovid19
-* https://ropensci.org/blog/2020/10/20/searching-medrxivr-and-biorxiv-preprint-data/
-* https://covidtracking.com/data/api
-  * `readr::read_csv("https://api.covidtracking.com/v1/states/daily.csv")`
+## RStudio Packages and Analysis
 
-## Subsections are ok too
+On RStudio, **`vcfR`** was used to read and manipulate the VCF files, along with packages **`ggplot2`** and **`dplyr`** to develop the figures and tables [@Knaus_2023] [@ggplot2] [@dplyr]. Additional packages called **`ggthemes`** and **`RColorBrewer`** were installed to assist with the visualization of the figures [@ggthemes] [@Neuwirth_2022]. Packages **`citr`** was used to cite the sources referenced in this report and **`knitr`** was used to "knit" the RMarkdown report into a PDF file [@citr] [@knitr]. The TinyTeX package was downloaded to develop LaTeX documents and assist in producing the "knitted" report as a PDF file [@tinytex].
 
 # Results and Discussion
 
@@ -43,6 +46,8 @@ library("vcfR")
 library("ggplot2")
 library("dplyr")
 library("ggthemes")
+library("RColorBrewer")
+library("tinytex")
 
 # this loads all function files in the code/functions directory
 function_paths <- list.files("code/functions", full.names = TRUE)
@@ -68,9 +73,111 @@ vcf_with_metadata <-
                                  cleaned_genes_table = gene_table)
 ```
 
+```{r high-qual-snp-table}
+# filter vcf data to only include SNPs with qual > 100
+qual_snps_table <-
+  vcf_with_metadata %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  filter(qual > 100)
+```
+
+To begin the analysis on the data, all VCF files from the pipeline were stacked and combined to create a complete data frame of 116 total SNPs including the associated metadata. With this data frame, the first step of the analysis was to determine the number of SNP samples obtained from _Homo sapien_ or _Chlorocebus aethiop_ cell cultures. By filtering the data to only include SNPs located on SARS-CoV-2 gene regions, it was determined that 34 SNPs were identified from _H. sapiens_ cells, and 8 SNPs from _C. aethiops_ (Figure 1). This suggested that SNPs occur most likely in _H. sapiens_ cells compared to _C. aethiops_. Although both organisms share about 90% of their genome, the amount of discrepancy on the number of identified SNPs indicated that the non-sharing 10% of the organism's genome may be the determinant [@grivet2024]. Next, I wanted to learn more about the SNPs such as their quality score and position on the SARS-CoV-2 genome. Upon inspection, it was revealed that the SNPs quality scores ranged from close to 0 and almost up-to 250 (Figure 2). SARS-CoV-2 SNPs analyzed from _H. sapien_ cells had a wide range, about 0 - 230, while the range from _C. aethiop_ cells was about 125 - 240 (Figure 2). Although it appears that higher quality SNPs come from _C. aethiop_ cells, it's important to remember that _C. aethiops_ had a smaller SNP sample number which could affect the spread of quality scores (Figure 1). Since the organism cells were either infected with SARS-CoV-2 or received a mock infection, I wondered how it would affect the SNP quality scores. Interestingly, there did not appear to be any clear distinctions between the cell treatment and SNP quality. SARS-CoV-2-treated cells resulted in both low and high quality SNPs, similarly with mock-treated cells (Figure 2). This could be interpreted as SARS-CoV-2 infection of cells not being necessary to produce SNPs and there might be instances of random cellular SNPs being mistaken for SNPS along the SARS-CoV-2 genome.
+
+To understand if the organism that SARS-CoV-2 infects affects SNP development in the viral genome, various cell lines from both organisms in the study were subjected to SARS-CoV-2 infection and these cell cultures served as reservoirs for viral replication. _H. sapiens_ cells included gastric cancer lines AGS and MKN45, kidney cancer line Huh, and lung cancer line A549. The Vero cell lines was derived from the kindey of _Ceropithecus aethiops_, an African green monkey [@Vero_2008]. However, this cell line is often associated with Grivet monkeys, which is why the data from UC Irvine lists the cells as coming from _Chlorocebus aethiops_, instead [@Culture_Collections]. To minimize confusion, this report will continue referring to the non-human primate cell samples as _Chlorocebus aethiops_ or _C. aethiops_. The number of identified SNPs isolated from each cell line were tallied together and the results showed that the most number of SNPs were analyzed from the A549 or human lung cell line, with 10 identified SNPs (Figure 3). 2 SNPs were found from each AGS, Huh, and Vero cell lines, while 1 SNP from the MKN45 line (Figure 3). At first glance, it appears that SNPs along the SARS-CoV-2 genome occur most often after infecting human lung cells compared to _C. aethiops_ kidney cells, however, it is important to remember that the total number of SNPs from each organism type was not equal. 
+
+With this information, I decided to re-analyze the SNP quality scores based on their position along the SARS-CoV-2 genome, but this time looking exclusively at the organism cell lines the SNPs were obtained from. Since a majority of the SNPs with quality scores less than or equal to 100 came from cell samples that had received the mock infection, I filtered the data to only include SNPs with quality scores greater than 100 and were from SARS-CoV-2 infected cell lines (Figure 2) (Figure 4). The results from this deeper analysis showed that, from _H. sapiens_ samples, SNPs synthesized from cell lines A549 and AGS were of overall lower quality than the Huh kidney cell line (Figure 1). From the _C. aethiops_ samples, all of the SNPs had a quality score greater than 200 (Figure 4). This shows that, although the SARS-CoV-2 sequences were synthesized from different organism samples, the program had greater confidence in the SNPs analyzed from kidney cell lines compared to other cell lines. These results were initially surprising given the fact that SARS-CoV-2 heavily affect the respiratory system. However, SARS-CoV-2 has been found to also affect non-respiratory tissues [@Klestova_2023]. The differences in quality scores could be due to the presence or lack of a complete reference genome for each cell line. Alternatively, since SARS-CoV-2 typically travels through and infects the respiratory system first, it's possible that there may have been more than 1 variant of the virus in the lung tissue cells, which could have impeded the program's ability to accurately discern SNPs in the sequences. SARS-CoV-2 sequences obtained from kidney cells may have had "greater quality" SNPs due to there only being 1 variant. Overall, this analysis shows that we cannot assume that increases in the number of SNPs equates to greater SNP quality. Additionally, the produced figure highlights that the SNPs were approximately found at positions 8500, 18000, and 29000 of the SARS-CoV-2 genome (Figure 4).
+
+To understand the importance of those genome positions, I decided to look at the various genes on the SARS-CoV-2 genome, using the data from the gff file. This information was compiled into a table which included the names of the genes, the start and end positions of the genes on the genome, and their base pair length (Table 1). With this information on hand, I tallied the number of SNPs found on each of the genes as listed in the dataset. It was discovered that the SNPs in the data were only found on four of the SARS-CoV-2 genes: ORF1ab, ORF8, S, and M (Figure 5). Of these genes, 7 distinct SNPs were located on the ORF1ab gene, 2 SNPs on the S gene, and 1 SNP each on the ORF8 and M genes (Figure 5). Since ORF1ab and S genes are the two longest genes on the genome, it's possible that more SNPs would be discovered on those regions (Table 1). Next, I analyzed the SNP sequences based on the SARS-CoV-2 gene they were found on to determine if the four listed genes correlate with the position of the SNPs along the genome. The results showed that SNPs found between position 8500 and 18000 were located on the ORF1ab gene, the SNPs on position 23000 were on the S gene, the SNP on position 26500 was on the M gene, and the SNPs at position 28000 to 29000 were found on the ORF8 gene (Figure 6). This confirms that the higher quality SNPs, shown according to the cell line they were synthesized from, were found on the ORF1ab and ORF8 gene (Figure 4) (Figure 6). Althoughb ORF1ab was found to have more identified SNPs than ORF8, the higher quality SNPs on those genes suggest importance to SARS-CoV-2 (Figure 5). The length of the SNP sequences were also analyzed based on their position on the genome and the organism the sequences were obtained from. Overall, the analysis revealed consistent SNP lengths from both _H. sapiens_ and _C. aethiops_ tissues, except for two instances of SNPs from _H. sapiens_ tissues on position 10500 and 26500 (Figure 6). This indicates no relationship between the length of the SNP sequences compared to the number of SNPs identified on the genes and their quality scores.
+
+Finally, I decided to investigate the overall SNP quality scores from each organism sample, depending on which gene they were discovered on. When looking into the SARS-CoV-2 infected _C. aethiops_ samples, SNPs were only found on the ORF1ab and ORF8 genes, with the highest average SNP quality score being from ORF8 (Figure 7). For _H. sapiens_ samples, SNPs were found on ORF1ab, ORF8, and the S gene, with the highest average quality score also being found on the ORF8 gene (Figure 7). When compiling all of the SNPs and organizing the information based on the SARS-CoV-2 gene it affects, organism it was synthesized from, and the tissue sample, I discovered that the majority of the identified SNPs from _H. sapiens_ and _C. aethiops_ samples were on the ORF1ab gene, though the sequences were analyzed from different tissue sources (Table 2). Even with this information, the quality score ranges show that not all of those SNPs had high quality scores which could be an indicator of different SARS-CoV-2 variants with mutations along the same gene. This indicates that ORF1ab is a non-conserved region of the SARS-CoV-2 genome, with many SNPs occurring there.
+
+Based on this analysis, it is clear that ORF1ab is an important part of SARS-CoV-2 evasion of immune responses, whether in _H. sapiens_ or _C. aethiops_. Although the large number of SNPs occurring in this region could also have to do with its large gene length, it still suggests that the gene plays a role in the virus' evolution. However, more research would need to be performed on a larger dataset.
+
 # Figures
 
-```{r sample-plot}
+```{r sample-number-plot}
+# A plot of the number of SNP samples per organism
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
+  group_by(sample, organism) %>%
+  tally() %>% # this gives a column n for the number of samples per organism
+  group_by(organism) %>%
+  tally() %>%
+  ggplot(aes(x = organism,
+             y = n)) +
+  geom_col(fill = "blue") +
+  geom_text(aes(label = n), vjust = -0.4, color = "black") +
+  labs(title = "Number of SNP Samples Per Organism Type",
+       x = "Organism") +
+  theme_few()
+ggsave("output/sample-number-plot.png", width = 8, height = 6)
+```
+
+**Figure 1**: A comparison of the number of SNP samples from _Homo sapiens_ and _Chlorocebus aethiops_. 
+
+```{r treatment-plot}
+# Scatterplot of total SNP quality scores of mock/SARS infected cells
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>%
+  ggplot(aes(x = pos,
+             y = qual,
+             color = organism,
+             size = treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "SNP Quality Scores Across the SARS-CoV-2 Genome",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Organism",
+       size = "Cell Treatment") +
+  theme_few()
+ggsave("output/treatments_scatterplot.png", width = 8, height = 6)
+```
+
+**Figure 2**: SNP quality across the SARS-CoV-2 genome, isolated from _Homo sapiens_ and _Chlorocebus aethiops_ cells. The SNPs found in the lower quality region of the graph are mostly from mock infected cells, while low and higher quality SNPs came from SARS-CoV-2 infected cells. SARS-CoV-2 replicated in _H. sapiens_ cells had low and high quality SNPs, while mostly high quality SNPs came from _C. aethiops_ cells.
+
+```{r cell-line-tally}
+# A histogram of the number of SNPs identified after infection of cell lines
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>%
+  filter(treatment == "SARS-CoV-2") %>%
+  group_by(sample, cell_line) %>%
+  tally() %>%
+  group_by(cell_line) %>%
+  tally() %>%
+  ggplot(aes(x = cell_line,
+             y = n)) +
+  geom_col(fill = "darkred") +
+  geom_text(aes(label = n), vjust = -0.2, color = "black") +
+  labs(title = "Number of SNPs Identified From Infected Cell Line Samples",
+       x = "Cell Line") +
+  theme_few()
+ggsave("output/cell-line_histogram.png", width = 8, height = 6)
+```
+
+**Figure 3**: A histogram of the number of distinct SNPs identified from SARS-CoV-2 sequences obtained from _H. sapiens_ and _C. aethiops_ cell lines. A549, AGS, Huh 7/7.5, MKN45 are _H. sapien_ cell lines, while Vero CCL81 and E6 are _C. aethiops_ cell lines.
+
+```{r cell-line-qual-plot}
+# Scatterplot of SNP qual scores after infection of cell lines (qual > 100)
+qual_snps_table %>%
+  filter(treatment == "SARS-CoV-2") %>%
+  ggplot(aes(x = pos,
+             y = qual,
+             color = cell_line)) +
+  geom_point(size = 5, alpha = 0.6) +
+  labs(title = "SNP Quality Scores from SARS-CoV-2 Infected Cell Lines",
+       x = "Position on Genome",
+       y = "SNP Quality",
+       color = "Cell Line") +
+  theme_few()
+ggsave("output/cell-line_scatterplot.png", width = 8, height = 6)
+```
+
+**Figure 4**: SNP quality scores across the SARS-CoV-2 genome based on the cell line they were synthesized from. A549, AGS, Huh 7/7.5, MKN45 are _H. sapien_ cell lines, while Vero CCL81 and E6 are _C. aethiops_ cell lines. Only the SNPs with quality scores greater than 100 were included.
+
+```{r distinct-snp-plot}
 # create a plot of unique SNP locations within each gene across all samples
 vcf_with_metadata %>%
   filter(!is.na(gene)) %>% # get rid of SNPs not in gene regions
@@ -80,17 +187,61 @@ vcf_with_metadata %>%
   tally() %>% # this collapses that down to the number of unique SNP locations
   ggplot(aes(x = gene,
              y = n)) +
-  geom_col() +
+  geom_col(fill = "darkgreen") +
+  geom_text(aes(label = n), vjust = -0.2, color = "black") +
   labs(title = "Count of distinct SNPs in Named SARS-CoV-2 Genes",
        x = "Gene Name") +
   theme_few() # get rid of the grey background
+ggsave("output/distinct-snp-plot.png", width = 8, height = 6)
 ```
 
-**Figure 1**: N and S genes have more unique SNPs in the set of samples analyzed.
+**Figure 5**: A graph of the number of distinct SNPs from different SARS-CoV-2 Genes. This figure reveals that most of the SNPs are located within the ORF1ab and S gene regions.
+
+```{r length-position-plot}
+# A histogram SNPs showing their position and length on genome
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>%
+  filter(treatment == "SARS-CoV-2") %>%
+  ggplot(aes(x = pos,
+             y = bases,
+             fill = gene,
+             color = organism)) +
+  geom_col(position = "dodge") +
+  labs(title = "Length of SNP Sequences Along the SARS-CoV-2 Genome",
+       x = "Position on Genome",
+       y = "Bases",
+       fill = "SARS-CoV-2 Gene",
+       color = "Organism") +
+  scale_fill_brewer(palette = "Set1") +
+  theme_few()
+ggsave("output/bases-position_histogram.png", width = 8, height = 6)
+```
+
+**Figure 6**: A histogram of the length of SNP sequences depending on their position on the SARS-CoV-2 genome. The colors indicate which SARS-CoV-2 gene the SNPs are located on, and the color outline represents from which organism's cells the SNP readings were obtained from.
+
+```{r qual-gene-boxplot}
+# graph of the SARS-CoV-2 gene and the quality of the SNPs within those genes
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>% # rounds qual scores to nearest whole number
+  ggplot(aes(x = gene,
+             y = qual,
+             fill = organism)) +
+  geom_boxplot(position = "dodge") + # prevents columns from stacking
+  labs(title = "Quality Scores of SNPs Across SARS-CoV-2 Genes",
+       x = "SARS-CoV-2 Gene",
+       y = "Quality Scores",
+       fill = "Organism") +
+  theme_few()
+ggsave("output/qual-gene_boxplot.png", width = 8, height = 6)
+```
+
+**Figure 7**: A boxplot comparing the range of and average SNP quality scores on each SARS-CoV-2 gene, synthesized from _H. sapiens_ and _C. aethiops_ samples.
 
 # Tables
 
-```{r example-table}
+```{r gene-table}
 # An example table to show the length of each gene using its start and end
 gene_table %>%
   mutate(length = end - start) %>%
@@ -99,8 +250,30 @@ gene_table %>%
                              "Start",
                              "End",
                              "Length"))
+write.csv(gene_table, "output/gene_table.csv", row.names = FALSE)
 ```
 
 **Table 1**: Gene names, locations, and lengths in the SARS-CoV-2 genome. Higher SNP counts in the S and N genes may be related to the larger size of these genes.
+
+```{r snp-table}
+# A table including information about SNPs: gene, organism, tissue, and n
+vcf_with_metadata %>%
+  filter(!is.na(gene)) %>%
+  mutate(qual = as.numeric(qual), # converts qual to numeric values
+         qual = round(qual)) %>%
+  group_by(gene, organism, tissue, treatment) %>%
+  filter(treatment == "SARS-CoV-2") %>%
+  tally() %>%
+  rename("Gene Name" = gene,
+         "Organism" = organism,
+         "Tissue" = tissue,
+         "Treatment" = treatment,
+         "Number of SNPs" = n) %>%
+  arrange(desc(`Number of SNPs`)) %>% # arranges values in descending order
+  knitr::kable()
+write.csv(qual_snps_table, "output/snps_table.csv", row.names = FALSE)
+```
+
+**Table 2**: A table of all identified SNPs, organized based on the SARS-CoV-2 gene it's found on as well as the organism and the tissue type it was synthesized from. All of the organism's cells received the SARS-CoV-2 infection. The most number of SNPs analyzed from _H. sapien_ and _C. aethiops_ cells are located on the ORF1ab gene.
 
 # Sources Cited
